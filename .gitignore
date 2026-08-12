@@ -1,0 +1,11 @@
+.DS_Store
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+Package.resolved
+*.ipa
+*.dSYM.zip
+secrets.xcconfig
