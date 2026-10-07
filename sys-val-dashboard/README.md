@@ -3,7 +3,7 @@
 ```
 DOORS sheet ─┐                                   ┌─> Dashboard (charts, strictly from Calculation_Engine)
 Bug tracker ─┴─> Raw_Data ─> Calculation_Engine ─┤
-TPM_Input (manual) ──────────────────────────────┘─> Code.gs ─> Slides copy "SYS VAL DASHBOARD CWxx"
+InputForm.html ─> TPM_Equipment + TPM_Support ──┘─> Code.gs ─> Slides copy "SYS VAL DASHBOARD <Project> CWxx"
 ```
 
 `Calculation_Engine` is a **Key | Value** list (columns A:B). The script reads it
@@ -22,31 +22,35 @@ Test-case results were not named as one of your two sources, so I assumed they l
 
 ---
 
-## Tab 1 – `TPM_Input`
+## Manual input – TPM Input form (replaces the old `TPM_Input` tab)
 
-| Cell(s) | Content |
-|---|---|
-| `A2` / `F2` | Titles "Test Equipment Status" / "Support Required" |
-| `A3:D3` | `Test Platform, Planned Date, Achieved Date, Status` |
-| `A4:D15` | Table A data (12 rows) |
-| `F3:J3` | `No., Action Item, Responsible, Due Date, Status` |
-| `F4:F6` | `1, 2, 3` (locked) |
-| `G4:J6` | Table B data (max 3 rows) |
+TPMs no longer type into the Sheet. They open **`InputForm.html`**, pick their project, and edit:
+- **Test Equipment Status**: up to 8 rows of Test Platform, Planned Week, Achieved Week, Status (Ready / Evaluation / Blocked).
+- **Support Required**: 3 fixed rows of Action Item, Responsible, Due Date, Status.
 
-**Data validation** `D4:D15`: list `Ready, Evaluation, Blocked`, reject other input.
+The form checks the input before saving. It highlights the status colours, shows a late achieved week in red, and shows `BLOCKER:` statuses in red. A **Generate deck** button builds that project's slides right away.
+The form runs as the Sheet owner, so TPMs need **no edit access** to the Sheet. Every save records the TPM's email and the time.
 
-**Conditional formatting**, range `D4:D15`, custom formulas:
-- `=$D4="Ready"` → green fill `#92D050`
-- `=$D4="Evaluation"` → yellow fill `#FFC000`
-- `=$D4="Blocked"` → light-red fill `#F4CCCC` (optional)
+| Tab | Columns | Notes |
+|---|---|---|
+| `Projects` | `Project, Release, Engine Tab (optional)` | One row per project. The owner maintains it. `Release` fills `{{RELEASE}}`. `Engine Tab` defaults to `Calculation_Engine` (see below). |
+| `TPM_Equipment` | `Project, Test Platform, Planned Week, Achieved Week, Status, Updated By, Updated At` | Written by the form. Weeks are stored as ISO text `2026-W43` and shown as `cw43` (or `cw06/27` for another year) on the slide. |
+| `TPM_Support` | `Project, No., Action Item, Responsible, Due Date, Status, Updated By, Updated At` | Written by the form. `No.` = slide row 1–3. |
 
-**Achieved date later than planned → red text**, range `C4:C15`:
-`=AND(ISNUMBER($B4),ISNUMBER($C4),$C4>$B4)` → font colour red.
+**Dashboard Generator → Setup Input Tabs** creates all three tabs and applies the formatting and protection:
+- Status validation and fills: `=$E2="Ready"` → green `#92D050`, `="Evaluation"` → yellow `#FFC000`, `="Blocked"` → light red.
+- Late week → red text on `D2:D`: `=AND($C2<>"",$D2<>"",$D2>$C2)`. ISO week text sorts chronologically.
+- `BLOCKER:` → red text on `TPM_Support!F2:F`.
+- All three tabs are locked to the owner.
 
-**Locking**: Data → Protect sheets and ranges → sheet `TPM_Input`, *Except certain cells*: `A4:D15` and `G4:J6`.
-Status text in Table B that starts with `BLOCKER:` turns red in the slide.
+**Several projects with different data sources:** duplicate `Raw_Data` and `Calculation_Engine` per project (for example `Raw_Data_B`, `Calculation_Engine_B` pointing at project B's DOORS and bug tracker), then put the engine tab name in `Projects!C`.
 
-All of the above is applied automatically by the menu item **Dashboard Generator → 1. Setup TPM_Input**.
+### Publish the form
+
+1. Apps Script editor → **+ → HTML**, name it `InputForm`, paste `InputForm.html`.
+2. **Deploy → New deployment → Web app**. Set *Execute as*: **Me**. Set *Who has access*: **Anyone within your organisation**.
+3. Share the web-app URL with the TPMs. Owners can also use **Dashboard Generator → Open TPM Input Form** inside the Sheet.
+4. After any code change: **Deploy → Manage deployments → Edit → New version**, or the URL keeps serving the old code.
 
 ## Tab 2 – `Raw_Data`
 
@@ -87,16 +91,14 @@ Row 1 headers: `Key | Value | Notes`. Format `*_COVERAGE`, `*_AUTO_RATE` as `0.0
 | 26 | `SYS4_MANUAL_COUNT` | `=COUNTIFS(Raw_Data!$B$10:$B,"SYS.4",Raw_Data!$D$10:$D,"Manual")` |
 | 27 | `SYS4_AUTO_RATE` | `=IF(B17=0,0,B25/B17)` |
 | 28–30 | `SYS5_AUTO_COUNT/MANUAL_COUNT/AUTO_RATE` | as rows 25–27 with `"SYS.5"`, `B21` |
-| 31–34 | `ACTION_1`, `RESP_1`, `DUE_1`, `STATUS_1` | `=IF(TPM_Input!G4="","",TPM_Input!G4)`, `…H4…`, `=IF(TPM_Input!I4="","",IF(ISNUMBER(TPM_Input!I4),TEXT(TPM_Input!I4,"dd.mm.yyyy"),TPM_Input!I4))`, `…J4…` |
-| 35–38 | `ACTION_2` … `STATUS_2` | same, row 5 of `TPM_Input` |
-| 39–42 | `ACTION_3` … `STATUS_3` | same, row 6 of `TPM_Input` |
+
+Support Required and Test Equipment values come from the form tabs, not from `Calculation_Engine`. Rows 31–42 from the earlier version can be deleted.
 
 The script reads display values, so `99.7%` reaches the slide exactly as formatted.
-Blank Support rows give `""`, and the script then writes an empty string into the slide.
 
 ## Tab 4 – `Dashboard`
 
-Every cell references `Calculation_Engine` only, never `Raw_Data` or `TPM_Input`.
+Every cell references `Calculation_Engine` only, never `Raw_Data` or the input tabs.
 
 **Doughnut data blocks** (2 cells each; `Remaining` is clamped so the ring never goes negative):
 
@@ -124,12 +126,23 @@ Select `A23:D25` → Insert → Chart → **Stacked bar chart**. Colours: Passed
 
 ## Slide template placeholders
 
-Every `Calculation_Engine` key works as `{{KEY}}`, e.g. `{{SYS4_COVERAGE}}`, `{{SYS5_COVERAGE}}`, `{{BUG_RATE}}`, `{{BUG_COMMENT}}`, `{{COVERAGE_NOTE}}`, `{{SYS4_TC_PASSED}}`. The script adds `{{CW}}` (e.g. `40`) and `{{REPORT_DATE}}`, so the "Updated cw40" badge becomes `Updated cw{{CW}}`.
-Support table cells use `{{ACTION_n}}`, `{{RESP_n}}`, `{{DUE_n}}`, `{{STATUS_n}}` for n = 1..3 (one placeholder per cell, no other text in the cell).
+`SYS_VAL_Dashboard_Template.pptx` already contains all of these. Upload it to Drive, open it with Google Slides, and save it as Google Slides.
+
+| Source | Placeholders |
+|---|---|
+| Engine tab | Every key, e.g. `{{SYS4_COVERAGE}}`, `{{SYS5_COVERAGE}}`, `{{BUG_RATE}}`, `{{BUG_COMMENT}}`, `{{COVERAGE_NOTE}}`, `{{SYS4_TC_PASSED}}` |
+| Projects tab | `{{PROJECT}}`, `{{RELEASE}}` |
+| Script | `{{CW}}` (e.g. `41`), `{{REPORT_DATE}}` |
+| Support Required (n = 1..3) | `{{ACTION_n}}`, `{{RESP_n}}`, `{{DUE_n}}`, `{{STATUS_n}}`. Blank rows become empty, and a status containing `BLOCKER:` turns red. |
+| Test Equipment (n = 1..8) | `{{EQ_PLATFORM_n}}`, `{{EQ_PLANNED_n}}`, `{{EQ_ACHIEVED_n}}`, `{{EQ_STATUS_n}}`. Each row is a table row, and rows beyond the project's count are removed. The status cell gets the status fill, and a late achieved week turns red. |
+
+Keep each table placeholder alone in its cell.
 
 ## Install
 
-1. In the Sheet: Extensions → Apps Script → paste `Code.gs`.
-2. Set `TEMPLATE_ID` and `FOLDER_ID` at the top.
-3. Reload the Sheet → menu **Dashboard Generator**: run *1. Setup TPM_Input*, then *2. Generate Dashboard Now*. Authorise Sheets, Slides and Drive when asked.
-4. Optional: *3. Schedule Weekly (Mon 07:00)*.
+1. In the Sheet: Extensions → Apps Script → paste `Code.gs`, and add `InputForm.html` as an HTML file named `InputForm`.
+2. Set `TEMPLATE_ID` and `FOLDER_ID` at the top of `Code.gs`.
+3. Reload the Sheet → **Dashboard Generator → Setup Input Tabs (one-off)**. Authorise when asked. Add your projects to `Projects`.
+4. Deploy the web app (see *Publish the form*) and send the URL to the TPMs.
+5. Generate a deck from the form, from **Generate Dashboard for a Project…**, or for every project with **Generate All Projects**.
+6. Optional: **Schedule Weekly (Mon 07:00, all projects)**.

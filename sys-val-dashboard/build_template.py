@@ -41,27 +41,23 @@ def ring(cx,cy,r,val,label=None):
     tb(cx-r,cy-14,2*r,28,val,size=8,bold=True,align=PP_ALIGN.CENTER,wrap=False)
 
 # header
-p=box(58,16,285,50,fill=NAVY,shape=MSO_SHAPE.ROUNDED_RECTANGLE,adj=.5); text(p,'Project A',20,True,LIME,PP_ALIGN.CENTER)
+p=box(58,16,285,50,fill=NAVY,shape=MSO_SHAPE.ROUNDED_RECTANGLE,adj=.5); text(p,'{{PROJECT}}',20,True,LIME,PP_ALIGN.CENTER); p.text_frame.word_wrap=False
 b=box(1366,20,260,48,fill=LIME,shape=MSO_SHAPE.ROUNDED_RECTANGLE,adj=.15); text(b,'Updated cw{{CW}}',18,True,'1C3A00',PP_ALIGN.CENTER); b.text_frame.word_wrap=False
-tb(58,86,1100,56,'SYS VAL PROJECT DASHBOARD REL R250',size=28,bold=True)
+tb(58,86,1100,56,'SYS VAL PROJECT DASHBOARD REL {{RELEASE}}',size=28,bold=True,wrap=False)
 
 # 1 equipment
 panel(50,160,370,336,'TEST EQUIPMENT STATUS')
-rows=[('Test Platform','Planned Date','Achieved Date','Status'),
-('Veh 1','cw43','cw50','Ready'),('Veh 2','cw46/25','cw33/26','Ready'),('SYS.5 Bench','cw40','cw40','Ready'),
-('SYS.4 Bench 1','cw37','cw37','Ready'),('CS Bench 1','cw40','cw40','Ready'),('Cluster HIL','cw32/26','cw06/27','Evaluation'),('RadarView','cw45','cw45','Ready')]
-t=s.shapes.add_table(len(rows),4,X(60),Y(228),X(350),Y(256)).table
+rows=[('Test Platform','Planned','Achieved','Status')]+[('{{EQ_PLATFORM_%d}}'%n,'{{EQ_PLANNED_%d}}'%n,'{{EQ_ACHIEVED_%d}}'%n,'{{EQ_STATUS_%d}}'%n) for n in range(1,9)]
+t=s.shapes.add_table(len(rows),4,X(60),Y(226),X(350),Y(262)).table
 for i,wd in enumerate([110,80,80,80]): t.columns[i].width=X(wd)
 for r,row in enumerate(rows):
-    t.rows[r].height=Y(256/len(rows))
+    t.rows[r].height=Y(262/len(rows))
     for c,v in enumerate(row):
-        cell=t.cell(r,c); cell.fill.solid()
-        fill='FFFFFF' if r==0 or c<3 else (GREEN if v=='Ready' else ORANGE)
-        cell.fill.fore_color.rgb=rgb(fill); cell.vertical_anchor=MSO_ANCHOR.MIDDLE
+        cell=t.cell(r,c); cell.fill.solid(); cell.fill.fore_color.rgb=rgb('FFFFFF'); cell.vertical_anchor=MSO_ANCHOR.MIDDLE
         cell.margin_left=cell.margin_right=Inches(.03); cell.margin_top=cell.margin_bottom=Inches(.01)
-        tf=cell.text_frame; tf.paragraphs[0].alignment=PP_ALIGN.CENTER
-        rn=tf.paragraphs[0].add_run(); rn.text=v; rn.font.size=Pt(8); rn.font.name='Arial'; rn.font.bold=(r==0 or c==0 or c==3); rn.font.color.rgb=rgb(DARK)
-tb(60,498,350,14,'Edit rows directly in the deck',size=6,color='888888',align=PP_ALIGN.RIGHT)
+        tf=cell.text_frame; tf.word_wrap=False; tf.paragraphs[0].alignment=PP_ALIGN.CENTER
+        rn=tf.paragraphs[0].add_run(); rn.text=v; rn.font.size=Pt(8 if r==0 else 6); rn.font.name='Arial'; rn.font.bold=(r==0 or c==0 or c==3); rn.font.color.rgb=rgb(DARK)
+tb(60,494,350,14,'Rows come from the TPM Input form; unused rows are removed',size=6,color='888888',align=PP_ALIGN.RIGHT)
 
 # 2 coverage
 panel(430,158,378,338,'COVERAGE PROGRESS')

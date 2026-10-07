@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #f3f6f8; --surface: #ffffff; --fg: #13222d; --muted: #5a6e7e; --line: #d5dee5;
+    --navy: #1d4b6e; --lime: #7fd11b; --lime-ink: #1c3a00;
+    --ready: #92d050; --eval: #ffc000; --blocked: #f4cccc; --red: #d42020;
+    --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+    --body: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--body); }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 20px 16px 96px; display: flex; flex-direction: column; gap: 18px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  h1 { font: 700 26px/1.1 var(--display); margin: 0; flex: 1 1 260px; }
+  .pick { display: flex; align-items: center; gap: 8px; }
+  .pick label { font-weight: 600; }
+  select, input, textarea { font: inherit; color: inherit; border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; background: var(--surface); width: 100%; }
+  select:focus, input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--navy); outline-offset: 1px; }
+  #project { min-width: 200px; font-weight: 600; }
+  .release { background: var(--lime); color: var(--lime-ink); font-weight: 700; padding: 4px 10px; border-radius: 5px; white-space: nowrap; }
+  .stamp { width: 100%; color: var(--muted); font-size: 13px; }
+
+  .notice { border-left: 4px solid var(--eval); background: var(--surface); padding: 10px 14px; border-radius: 0 6px 6px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+  section { background: var(--surface); border: 1.5px solid var(--navy); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  h2 { font: 700 19px/1.1 var(--display); letter-spacing: .03em; text-transform: uppercase; margin: 0; }
+  .hint { color: var(--muted); font-size: 13px; margin: 0; }
+  .table { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  td { padding: 6px; vertical-align: top; border-bottom: 1px solid var(--line); }
+  td.no { font: 700 18px var(--display); color: var(--navy); width: 36px; padding-top: 10px; }
+  textarea { resize: vertical; min-height: 38px; }
+
+  select.st-Ready { background: var(--ready); }
+  select.st-Evaluation { background: var(--eval); }
+  select.st-Blocked { background: var(--blocked); }
+  input.late { color: var(--red); border-color: var(--red); font-weight: 600; }
+  .late-tag { color: var(--red); font-size: 12px; font-weight: 600; }
+  textarea.blocker { color: var(--red); font-weight: 600; }
+
+  button { font: 600 14px var(--body); border-radius: 6px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--navy); background: var(--surface); color: var(--navy); }
+  button.primary { background: var(--navy); color: #fff; }
+  button.icon { padding: 6px 10px; border-color: var(--line); color: var(--muted); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); }
+  .bar .inner { max-width: 1060px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  #msg { flex: 1 1 260px; font-size: 13px; }
+  #msg.error { color: var(--red); font-weight: 600; }
+  #msg.ok { color: #2e7d32; font-weight: 600; }
+  #msg a { color: var(--navy); font-weight: 600; }
+  .dirty { color: #8a5a00; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>SYS VAL Dashboard · TPM Input</h1>
+    <div class="pick">
+      <label for="project">Project</label>
+      <select id="project" disabled><option>Loading…</option></select>
+      <span class="release" id="release" hidden></span>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </header>
+
+  <div class="notice" id="switchWarn" hidden>
+    <span id="switchText"></span>
+    <button type="button" id="discardBtn">Discard changes and switch</button>
+    <button type="button" id="stayBtn">Stay</button>
+  </div>
+
+  <section>
+    <h2>Test Equipment Status</h2>
+    <p class="hint">Weeks use ISO calendar weeks (shown as cw43 on the slide). An achieved week later than the planned week turns red. Up to 8 platforms.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Test Platform</th><th>Planned Week</th><th>Achieved Week</th><th>Status</th><th></th></tr></thead>
+        <tbody id="eqBody"></tbody>
+      </table>
+    </div>
+    <div><button type="button" id="addEq">+ Add platform</button></div>
+  </section>
+
+  <section>
+    <h2>Support Required</h2>
+    <p class="hint">Three rows at most. Start a status with <b>BLOCKER:</b> to show it in red on the slide. Empty rows stay empty on the slide.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>N°</th><th>Action Item</th><th>Responsible</th><th>Due Date</th><th>Status</th></tr></thead>
+        <tbody id="supBody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="bar"><div class="inner">
+  <span id="msg"></span>
+  <button type="button" id="saveBtn" class="primary" disabled>Save</button>
+  <button type="button" id="genBtn" disabled>Generate deck</button>
+</div></div>
+
+<script>
+const MAX_EQ = 8, SUPPORT_ROWS = 3, STATUSES = ['Ready', 'Evaluation', 'Blocked'];
+const WEEK_RE = /^\d{4}-W\d{2}$/;
+const $ = id => document.getElementById(id);
+const state = { projects: [], project: null, dirty: false, busy: false, pending: null };
+
+function call(fn, ...args) {
+  return new Promise((resolve, reject) =>
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args));
+}
+
+function el(tag, props, children) {
+  const node = Object.assign(document.createElement(tag), props || {});
+  (children || []).forEach(c => node.appendChild(c));
+  return node;
+}
+
+function setMsg(text, kind, link) {
+  const m = $('msg');
+  m.textContent = text || '';
+  m.className = kind || '';
+  if (link) {
+    m.appendChild(document.createTextNode(' '));
+    m.appendChild(el('a', { href: link.url, target: '_blank', rel: 'noopener', textContent: link.label }));
+  }
+}
+
+function setBusy(busy) {
+  state.busy = busy;
+  $('saveBtn').disabled = busy || !state.project;
+  $('genBtn').disabled = busy || !state.project || state.dirty;
+  $('project').disabled = busy || !state.projects.length;
+}
+
+function markDirty() {
+  if (!state.dirty) { state.dirty = true; setBusy(state.busy); }
+  setMsg('Unsaved changes', 'dirty');
+}
+
+function weekInput(value) {
+  const input = el('input', { type: 'week', value: value || '' });
+  if (input.type !== 'week') {           // Firefox / Safari: plain text with the same format
+    input.type = 'text';
+    input.placeholder = '2026-W43';
+    input.pattern = '\\d{4}-W\\d{2}';
+    input.value = value || '';
+  }
+  return input;
+}
+
+function refreshRow(tr) {
+  const [planned, achieved] = tr.querySelectorAll('input[data-k="planned"], input[data-k="achieved"]');
+  const late = planned.value && achieved.value && achieved.value > planned.value;
+  achieved.classList.toggle('late', !!late);
+  tr.querySelector('.late-tag').hidden = !late;
+  const st = tr.querySelector('select');
+  st.className = st.value ? 'st-' + st.value : '';
+}
+
+function addEqRow(e) {
+  e = e || {};
+  const platform = el('input', { type: 'text', value: e.platform || '', placeholder: 'e.g. SYS.5 Bench', maxLength: 300 });
+  platform.dataset.k = 'platform';
+  const planned = weekInput(e.planned); planned.dataset.k = 'planned';
+  const achieved = weekInput(e.achieved); achieved.dataset.k = 'achieved';
+  const status = el('select', {}, [el('option', { value: '', textContent: 'Choose…' })]
+    .concat(STATUSES.map(s => el('option', { value: s, textContent: s }))));
+  status.value = e.status || '';
+  status.dataset.k = 'status';
+  const remove = el('button', { type: 'button', className: 'icon', textContent: 'Remove', title: 'Remove this platform' });
+
+  const tr = el('tr', {}, [
+    el('td', {}, [platform]),
+    el('td', {}, [planned]),
+    el('td', {}, [achieved, el('div', { className: 'late-tag', textContent: 'Later than planned', hidden: true })]),
+    el('td', {}, [status]),
+    el('td', {}, [remove]),
+  ]);
+  tr.addEventListener('input', () => { refreshRow(tr); markDirty(); });
+  tr.addEventListener('change', () => { refreshRow(tr); markDirty(); });
+  remove.addEventListener('click', () => { tr.remove(); updateAddBtn(); markDirty(); });
+  $('eqBody').appendChild(tr);
+  refreshRow(tr);
+  updateAddBtn();
+}
+
+function updateAddBtn() {
+  $('addEq').disabled = $('eqBody').children.length >= MAX_EQ;
+}
+
+function supRow(n, s) {
+  s = s || {};
+  const field = (k, tag, ph) => {
+    const f = el(tag, { value: s[k] || '', placeholder: ph || '', maxLength: 300 });
+    if (tag === 'textarea') f.rows = 2;
+    f.dataset.k = k;
+    return f;
+  };
+  const status = field('status', 'textarea', 'e.g. BLOCKER: specific binary needed');
+  const tr = el('tr', {}, [
+    el('td', { className: 'no', textContent: n }),
+    el('td', {}, [field('action', 'textarea', 'Action item')]),
+    el('td', {}, [field('responsible', 'input', 'Name / team')]),
+    el('td', {}, [field('due', 'input', 'e.g. R3.1_last (28.4.26)')]),
+    el('td', {}, [status]),
+  ]);
+  const refresh = () => status.classList.toggle('blocker', status.value.indexOf('BLOCKER:') !== -1);
+  tr.addEventListener('input', () => { refresh(); markDirty(); });
+  refresh();
+  return tr;
+}
+
+function render(data) {
+  $('eqBody').textContent = '';
+  (data.equipment.length ? data.equipment : [{}]).forEach(addEqRow);
+  $('supBody').textContent = '';
+  for (let n = 1; n <= SUPPORT_ROWS; n++) {
+    $('supBody').appendChild(supRow(n, data.support.find(s => s.no === n)));
+  }
+  $('stamp').textContent = data.updatedAt
+    ? 'Last saved ' + data.updatedAt + ' by ' + data.updatedBy
+    : 'Nothing saved for this project yet.';
+  state.dirty = false;
+}
+
+function collect() {
+  const equipment = [...$('eqBody').children].map(tr => {
+    const o = {};
+    tr.querySelectorAll('[data-k]').forEach(f => { o[f.dataset.k] = f.value.trim(); });
+    return o;
+  });
+  const support = [...$('supBody').children].map(tr => {
+    const o = {};
+    tr.querySelectorAll('[data-k]').forEach(f => { o[f.dataset.k] = f.value.trim(); });
+    return o;
+  });
+  return { equipment, support };
+}
+
+function validate(data) {
+  let i = 0;
+  for (const e of data.equipment) {
+    i++;
+    if (!(e.platform || e.planned || e.achieved || e.status)) continue;
+    if (!e.platform) return 'Test equipment row ' + i + ': enter the test platform name.';
+    if (!e.status) return 'Test equipment row ' + i + ': choose a status.';
+    if ((e.planned && !WEEK_RE.test(e.planned)) || (e.achieved && !WEEK_RE.test(e.achieved))) {
+      return 'Test equipment row ' + i + ': weeks must look like 2026-W43.';
+    }
+  }
+  return '';
+}
+
+function showProject(name) {
+  const p = state.projects.find(x => x.name === name);
+  state.project = name;
+  $('project').value = name;
+  $('release').textContent = p && p.release ? 'REL ' + p.release : '';
+  $('release').hidden = !(p && p.release);
+  try { localStorage.setItem('sysval-project', name); } catch (e) {}
+  setBusy(true);
+  setMsg('Loading ' + name + '…');
+  call('getProjectData', name)
+    .then(data => { render(data); setMsg(''); })
+    .catch(err => setMsg(err.message, 'error'))
+    .finally(() => setBusy(false));
+}
+
+$('project').addEventListener('change', e => {
+  const next = e.target.value;
+  if (state.dirty) {
+    state.pending = next;
+    e.target.value = state.project;
+    $('switchText').textContent = 'You have unsaved changes for ' + state.project + '.';
+    $('switchWarn').hidden = false;
+    return;
+  }
+  showProject(next);
+});
+$('discardBtn').addEventListener('click', () => { $('switchWarn').hidden = true; state.dirty = false; showProject(state.pending); });
+$('stayBtn').addEventListener('click', () => { $('switchWarn').hidden = true; state.pending = null; });
+$('addEq').addEventListener('click', () => { addEqRow(); markDirty(); });
+
+$('saveBtn').addEventListener('click', () => {
+  const data = collect();
+  const problem = validate(data);
+  if (problem) return setMsg(problem, 'error');
+  setBusy(true);
+  setMsg('Saving…');
+  call('saveProjectData', state.project, data)
+    .then(saved => { render(saved); setMsg('Saved for ' + state.project + '.', 'ok'); })
+    .catch(err => setMsg(err.message, 'error'))
+    .finally(() => setBusy(false));
+});
+
+$('genBtn').addEventListener('click', () => {
+  setBusy(true);
+  setMsg('Generating the deck. This takes about 20 seconds…');
+  call('generateFromForm', state.project)
+    .then(out => setMsg('Created "' + out.name + '".', 'ok', { url: out.url, label: 'Open deck' }))
+    .catch(err => setMsg(err.message, 'error'))
+    .finally(() => setBusy(false));
+});
+
+window.addEventListener('beforeunload', e => { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+call('getProjects')
+  .then(projects => {
+    state.projects = projects;
+    const sel = $('project');
+    sel.textContent = '';
+    if (!projects.length) {
+      sel.appendChild(el('option', { textContent: 'No projects yet' }));
+      return setMsg('Ask the dashboard owner to add your project to the Projects tab.', 'error');
+    }
+    projects.forEach(p => sel.appendChild(el('option', { value: p.name, textContent: p.name })));
+    let last = '';
+    try { last = localStorage.getItem('sysval-project') || ''; } catch (e) {}
+    showProject(projects.some(p => p.name === last) ? last : projects[0].name);
+  })
+  .catch(err => setMsg(err.message, 'error'));
+</script>
+</body>
+</html>
