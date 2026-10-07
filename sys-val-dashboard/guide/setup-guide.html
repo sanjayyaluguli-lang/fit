@@ -1,0 +1,285 @@
+<title>SYS VAL Dashboard Setup</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of 10 steps; each step = text + a drawn mock of what the screen looks like. */
+:root{
+  --bg:#f3f6f8; --surface:#ffffff; --fg:#13222d; --muted:#53687a; --line:#d5dee5;
+  --navy:#1d4b6e; --navy-ink:#ffffff; --lime:#7fd11b; --lime-ink:#1c3a00;
+  --ok:#2e9a47; --warn:#e8a400; --bad:#d23a3a; --code-bg:#0f2230; --code-fg:#d8e6f0; --hl:#ffe27a; --hl-ink:#3a2c00;
+  --display:"Barlow Semi Condensed","Arial Narrow",sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1a23; --surface:#15252f; --fg:#e5eef4; --muted:#93a8b8; --line:#2a3d4a; --navy:#4a90c4; --navy-ink:#071722; --lime:#8fdc2e; --lime-ink:#142a00;
+  --code-bg:#08141c; --hl:#7a6414; --hl-ink:#fff3c4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1a23; --surface:#15252f; --fg:#e5eef4; --muted:#93a8b8; --line:#2a3d4a; --navy:#4a90c4; --navy-ink:#071722; --lime:#8fdc2e; --lime-ink:#142a00;
+  --code-bg:#08141c; --hl:#7a6414; --hl-ink:#fff3c4; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:860px;margin:0 auto}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(30px,6vw,44px);font-weight:700}
+h2{font-size:24px;font-weight:700}
+.lede{color:var(--muted);max-width:62ch;margin:10px 0 20px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.pill{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--navy);color:var(--navy-ink)}
+.pill.l{background:var(--lime);color:var(--lime-ink)}
+.progress{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--lime);transition:width .25s}
+#count{font-family:var(--mono);font-size:13px;white-space:nowrap}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:26px;font-family:var(--mono);font-size:12px}
+.flow span{border:1px solid var(--line);background:var(--surface);padding:4px 8px;border-radius:4px}
+.flow b{color:var(--muted)}
+.step{display:grid;grid-template-columns:48px minmax(0,1fr);gap:0 16px;padding-block:22px;border-top:1px solid var(--line)}
+.num{font-family:var(--display);font-weight:700;font-size:34px;color:var(--navy);line-height:1}
+.step.done .num{color:var(--ok)}
+.body{min-width:0;display:flex;flex-direction:column;gap:12px}
+.body p{margin:0;max-width:68ch}
+ol.do{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:68ch}
+code,.k{font-family:var(--mono);font-size:.88em;background:var(--surface);border:1px solid var(--line);padding:1px 5px;border-radius:3px}
+.done-row{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.done-row input{width:18px;height:18px;accent-color:var(--ok)}
+.shot{border:1px solid var(--line);background:var(--surface);border-radius:8px;overflow:hidden;font-size:13px}
+.shot .cap{padding:6px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);background:var(--bg)}
+.scroll{overflow-x:auto}
+.tabs{display:flex;gap:2px;padding:8px 8px 0;background:var(--bg);border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs span{padding:7px 14px;border-radius:6px 6px 0 0;font-size:12.5px;white-space:nowrap;color:var(--muted)}
+.tabs span.on{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:inset 0 -3px 0 var(--navy)}
+.code{background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:12.5px;padding:12px 14px;margin:0;overflow-x:auto;line-height:1.7;white-space:pre}
+.code .c{color:#7f98aa}.code .s{color:#a5e075}
+.hl{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-radius:2px}
+table.g{border-collapse:collapse;width:100%;font-size:12.5px}
+table.g th,table.g td{border:1px solid var(--line);padding:5px 9px;text-align:left;white-space:nowrap}
+table.g th{background:var(--bg);font-weight:600}
+table.g td.mono,.mono{font-family:var(--mono);font-size:12px}
+.s-ready{background:#92d050;color:#17310a}.s-eval{background:#ffc000;color:#3a2a00}.s-block{background:#f4cccc;color:#5a1414}.late{color:#e02020;font-weight:600}
+.menu{width:260px;max-width:100%;margin:14px;border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 18px rgb(0 0 0 /.18);background:var(--surface)}
+.menu div{padding:8px 14px}
+.menu .t{font-weight:600;background:var(--bg);border-bottom:1px solid var(--line)}
+.menu .go{background:var(--navy);color:var(--navy-ink);font-weight:600}
+.donut-row{display:flex;flex-wrap:wrap;gap:20px;padding:16px;align-items:center}
+.donut{position:relative;width:96px;height:96px}
+.donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+.donut b{position:absolute;inset:0;display:grid;place-items:center;font-size:14px}
+.stack{flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px}
+.stack div{display:flex;height:22px;border-radius:3px;overflow:hidden;font-size:11px;color:#fff;font-family:var(--mono)}
+.stack i{display:grid;place-items:center;font-style:normal}
+.slide{aspect-ratio:16/9;max-width:100%;margin:14px;border:1px solid var(--line);border-radius:4px;background:var(--bg);padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;font-size:12px}
+.slide .head{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-weight:700;font-size:16px}
+.slide .badge{background:var(--lime);color:var(--lime-ink);padding:2px 10px;border-radius:5px;font-size:13px}
+.slide .card{border:1.5px solid var(--navy);border-radius:7px;padding:8px;display:flex;flex-direction:column;gap:5px}
+.slide .card h4{margin:0;font-size:11px;letter-spacing:.06em}
+.ph{background:var(--hl);color:var(--hl-ink);font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:3px;white-space:nowrap;width:fit-content}
+.red{color:#e02020;font-weight:600}
+.warn{border-left:4px solid var(--warn);padding:8px 12px;background:var(--surface);max-width:68ch;border-radius:0 6px 6px 0;font-size:14px}
+.ft h2{margin-top:36px;margin-bottom:12px}
+.ft table{border-collapse:collapse;width:100%}
+.ft td,.ft th{border-bottom:1px solid var(--line);padding:8px 10px 8px 0;text-align:left;vertical-align:top;font-size:14px}
+.ft th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tabs span.ghost{opacity:.45;border:1px dashed var(--line)}
+.files{display:flex;flex-direction:column;width:220px;max-width:100%;margin:14px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:12.5px}
+.files div{padding:7px 12px;border-top:1px solid var(--line)}.files .fh{border-top:0;font-family:var(--body);font-weight:600;background:var(--bg)}.files .on{background:var(--bg);font-weight:600}
+.dlg{margin:14px;max-width:560px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dlg .dt{padding:9px 14px;font-weight:600;background:var(--bg);border-bottom:1px solid var(--line)}
+.dlg .dr{display:flex;flex-wrap:wrap;gap:4px 12px;padding:8px 14px;border-top:1px solid var(--line)}.dlg .dr:first-of-type{border-top:0}
+.dlg .dr span{width:130px;color:var(--muted)}.dlg .dr b{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.fm-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;padding:10px 12px;font-family:var(--display);font-size:16px}
+.fm-head span{font-family:var(--body);font-size:13px;display:flex;align-items:center;gap:6px}
+.fm-sel{border:1px solid var(--line);border-radius:4px;padding:2px 8px;font-weight:600}
+.shot .scroll+.scroll{border-top:1px solid var(--line)}
+ul.facts{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:68ch}
+.genbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px}
+.genbar .ok{flex:1 1 240px;color:var(--ok);font-weight:600;font-size:13px}
+.genbar .btn{border:1px solid var(--navy);color:var(--navy);border-radius:6px;padding:6px 12px;font-weight:600}.genbar .btn.p{background:var(--navy);color:var(--navy-ink)}
+@media (max-width:520px){.step{grid-template-columns:1fr}.num{font-size:28px}.slide{font-size:10px;padding:8px}}
+
+.part{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.why{color:var(--muted)}
+.body h3{font-family:var(--display);font-size:18px;margin:6px 0 0}
+.hint{color:var(--muted);font-size:13px;margin:0;max-width:68ch}
+.jump{display:flex;flex-wrap:wrap;gap:4px}
+.jump a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;background:var(--surface)}
+.jump a.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.progress{flex-wrap:wrap}
+.howto{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px;margin-bottom:6px;max-width:72ch}
+.copy{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.copy-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px}
+.copy textarea{display:block;width:100%;border:0;margin:0;padding:10px 12px;font-family:var(--mono);font-size:12px;line-height:1.5;background:var(--code-bg);color:var(--code-fg);resize:vertical;white-space:pre;overflow:auto;tab-size:24}
+.cbtn{font:600 13px var(--body);border:1px solid var(--navy);background:var(--navy);color:var(--navy-ink);border-radius:5px;padding:5px 14px;cursor:pointer}
+.cbtn.ok{background:var(--ok);border-color:var(--ok)}
+.cbtn:focus-visible,.jump a:focus-visible,.done-row input:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.check{border-left:4px solid var(--ok);background:var(--surface);padding:8px 14px;border-radius:0 6px 6px 0;max-width:72ch;font-size:14px}
+.check ul{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+table.g td.rn{color:var(--muted);background:var(--bg);text-align:right}
+table.g td.f{color:var(--navy)}
+table.exp{max-width:560px}
+.tabs span.ghost{opacity:.45;border:1px dashed var(--line)}
+.tabs span.plus{font-weight:700;color:var(--fg)}
+.files{display:flex;flex-direction:column;width:200px;max-width:100%;border-right:1px solid var(--line);font-family:var(--mono);font-size:12.5px;flex:none}
+.files div{padding:7px 12px;border-top:1px solid var(--line)}.files .fh{border-top:0;font-family:var(--body);font-weight:600;background:var(--bg);display:flex;justify-content:space-between}.files .on{background:var(--bg);font-weight:600}
+.ide{display:flex;flex-wrap:wrap}.ide pre{flex:1 1 300px;min-width:0;margin:0}
+.dlg,.pop,.editor{margin:14px;max-width:560px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.dlg .dt{padding:9px 14px;font-weight:600;background:var(--bg);border-bottom:1px solid var(--line)}
+.dlg .dr,.editor .er{display:flex;flex-wrap:wrap;gap:4px 12px;padding:8px 14px;border-top:1px solid var(--line)}.dlg .dr:first-of-type{border-top:0}
+.dlg .dr span,.editor .er span{width:160px;color:var(--muted)}.dlg .dr b,.editor .er b{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.editor .et{display:flex;border-bottom:1px solid var(--line)}.editor .et span{padding:8px 16px;color:var(--muted)}.editor .et span.on{color:var(--navy);font-weight:600;box-shadow:inset 0 -3px 0 var(--navy)}
+.pop{padding:12px 14px;max-width:280px;display:flex;flex-direction:column;gap:6px;box-shadow:0 6px 18px rgb(0 0 0 / .15)}.pop p{margin:0}
+.btn{display:inline-block;width:fit-content;border:1px solid var(--navy);color:var(--navy);border-radius:6px;padding:5px 12px;font-weight:600}.btn.p{background:var(--navy);color:var(--navy-ink)}
+.menu .sep{padding:0;border-top:1px solid var(--line)}
+.shot>.menu{display:inline-block;vertical-align:top}.shot>.dlg{display:inline-block;vertical-align:top;width:340px}
+.shot .scroll+.scroll{border-top:1px solid var(--line)}
+a{color:var(--navy)}
+.dlg.n .dr span{width:22px}
+
+</style>
+
+<div class="wrap">
+  <h1>SYS VAL Dashboard Setup</h1>
+  <p class="lede">A click-by-click manual for the owner of the dashboard. It goes from three files to a weekly Slides deck per project, with TPMs entering Test Equipment and Support Required through a web form. Every formula can be copied with one button, and sample data lets you check each step against known numbers.</p>
+  <div class="meta"><span class="pill">About 60 minutes</span><span class="pill l">Copy and paste, no coding</span><span class="pill">14 steps</span></div>
+  <div class="flow"><span>Requirements tracker</span><b>+</b><span>Bug tracker</span><b>→</b><span>Raw_Data</span><b>→</b><span>Calculation_Engine</span><b>→</b><span>Code.gs</span><b>→</b><span>Slides deck</span></div>
+  <div class="flow"><span>TPM Input form</span><b>→</b><span>TPM_Equipment + TPM_Support</span><b>→</b><span>Code.gs</span></div>
+
+  <div class="progress"><div class="bar"><i id="fill"></i></div><span id="count">0 / 14</span><nav class="jump" aria-label="Jump to step"><a href="#s1">1</a><a href="#s2">2</a><a href="#s3">3</a><a href="#s4">4</a><a href="#s5">5</a><a href="#s6">6</a><a href="#s7">7</a><a href="#s8">8</a><a href="#s9">9</a><a href="#s10">10</a><a href="#s11">11</a><a href="#s12">12</a><a href="#s13">13</a><a href="#s14">14</a></nav></div>
+
+  <div class="howto"><b>How to use the copy blocks:</b> click <b>Copy</b>, click the target cell named in the block (usually A1), press <b>Ctrl+V</b> (<b>Cmd+V</b> on Mac). Google Sheets splits the text into cells and turns lines starting with = into formulas.</div>
+
+<section class="step" id="s1" data-s="1"><div class="num">1</div><div class="body"><div class="part">Before you start</div><h2>Collect the three files and a Drive folder</h2><p class="why">Everything you paste later comes from these files. The destination folder is where the weekly decks will appear.</p><ol class="do" start="1"><li>Open <a href="https://github.com/sanjayyaluguli-lang/fit/blob/claude/hopeful-mayer-6tuncf/sys-val-dashboard/Code.gs" target="_blank" rel="noopener">Code.gs</a>, <a href="https://github.com/sanjayyaluguli-lang/fit/blob/claude/hopeful-mayer-6tuncf/sys-val-dashboard/InputForm.html" target="_blank" rel="noopener">InputForm.html</a> and <a href="https://github.com/sanjayyaluguli-lang/fit/blob/claude/hopeful-mayer-6tuncf/sys-val-dashboard/SYS_VAL_Dashboard_Template.pptx" target="_blank" rel="noopener">SYS_VAL_Dashboard_Template.pptx</a> on GitHub (sign in if asked; the repository is yours).</li><li>For each of the two code files, click <b>Raw</b> (top right of the file), then <b>Ctrl+A</b>, <b>Ctrl+C</b> when you need it in step 7. For the .pptx click <b>Download raw file</b> (the download arrow).</li><li>In Google Drive click <b>+ New → New folder</b>, name it <code>SYS VAL Decks</code>, and open it.</li><li>Copy the folder ID from the address bar and keep it in a note: <code>drive.google.com/drive/folders/<span class="hl">0B9q…Lk7</span></code>.</li></ol><p class="warn">You need a Google Workspace account. Personal Gmail works for testing, but the form cannot record who saved and TPMs outside your organisation cannot open it.</p><label class="done-row"><input type="checkbox" id="done1"> Step 1 done</label></div></section>
+<section class="step" id="s2" data-s="2"><div class="num">2</div><div class="body"><div class="part">Test data</div><h2>Create two sample tracker sheets (recommended)</h2><p class="why">With known sample numbers you can confirm every formula before you point the dashboard at the real trackers. Skip this step if your Requirements tracker and Bug tracker sheets already have the tabs below.</p><h3>2a · Sample Requirements tracker</h3><ol class="do" start="1"><li>Open <b>sheets.new</b> and name the file <code>SAMPLE Requirements tracker</code>.</li><li>Double-click the tab <b>Sheet1</b> at the bottom and rename it to <code>Coverage</code>.</li><li>Click cell <b>A1</b>, press <b>Copy</b> on the block below, then <b>Ctrl+V</b>.</li></ol><div class="copy"><div class="copy-h"><span><b>Coverage tab</b> · paste at <code>Coverage!A1</code></span><button type="button" class="cbtn" data-copy="c_cov">Copy</button></div><textarea id="c_cov" readonly rows="4" spellcheck="false">Level	Total Reqs	Covered Reqs	Moved to R260
+SYS.4	241	241	0
+SYS.5	442	427	13</textarea></div><ol class="do" start="4"><li>Click the <b>+</b> at the bottom left to add a tab, rename it <code>TestCases</code>, click <b>A1</b> and paste the next block.</li></ol><div class="copy"><div class="copy-h"><span><b>TestCases tab</b> · paste at <code>TestCases!A1</code></span><button type="button" class="cbtn" data-copy="c_tc">Copy</button></div><textarea id="c_tc" readonly rows="4" spellcheck="false">TC_ID	Level	Result	Type
+TC-S4-001	SYS.4	Passed	Automated
+TC-S4-002	SYS.4	Passed	Automated
+TC-S4-003	SYS.4	Passed	Automated
+TC-S4-004	SYS.4	Passed	Automated
+TC-S4-005	SYS.4	Passed	Manual
+TC-S4-006	SYS.4	Passed	Manual
+TC-S4-007	SYS.4	Failed	Manual
+TC-S4-008	SYS.4	Failed	Manual
+TC-S4-009	SYS.4	Failed	Manual
+TC-S4-010	SYS.4	Not Run	Manual
+TC-S5-001	SYS.5	Passed	Automated
+TC-S5-002	SYS.5	Passed	Automated
+TC-S5-003	SYS.5	Passed	Automated
+TC-S5-004	SYS.5	Passed	Automated
+TC-S5-005	SYS.5	Passed	Manual
+TC-S5-006	SYS.5	Failed	Automated
+TC-S5-007	SYS.5	Failed	Automated
+TC-S5-008	SYS.5	Failed	Automated
+TC-S5-009	SYS.5	Failed	Manual
+TC-S5-010	SYS.5	Not Run	Manual</textarea></div><h3>2b · Sample Bug tracker</h3><ol class="do" start="1"><li>Open <b>sheets.new</b>, name it <code>SAMPLE Bug tracker</code>, rename the tab to <code>Summary</code>, click <b>A1</b> and paste.</li></ol><div class="copy"><div class="copy-h"><span><b>Summary tab</b> · paste at <code>Summary!A1</code></span><button type="button" class="cbtn" data-copy="c_bug">Copy</button></div><textarea id="c_bug" readonly rows="4" spellcheck="false">Metric	Value
+Total Bugs	157
+Escaped Bugs	22
+Weekly Comments	1) Clean-up re-triggered 2) Attribute &quot;Origin Sw Type&quot; added 3) Attribute &quot;Origin&quot; implemented</textarea></div><div class="check"><b>You should see</b><ul><li>Coverage tab: 3 rows (header, SYS.4, SYS.5).</li><li>TestCases tab: 21 rows (header + 20 test cases).</li><li>Summary tab: 4 rows, with the weekly comment in B4.</li></ul></div><p class="hint">Your real trackers must use the same tab names and column order, or you adjust the ranges in step 4.</p><label class="done-row"><input type="checkbox" id="done2"> Step 2 done</label></div></section>
+<section class="step" id="s3" data-s="3"><div class="num">3</div><div class="body"><div class="part">Build the Sheet</div><h2>Create the dashboard Sheet and its tabs</h2><p class="why">The script finds tabs by name, so the spelling must match exactly.</p><ol class="do" start="1"><li>Open <b>sheets.new</b> and name the file <code>SYS VAL Dashboard</code> (click "Untitled spreadsheet" top left).</li><li>Double-click <b>Sheet1</b> and rename it <code>Raw_Data</code>.</li><li>Click <b>+</b> (bottom left) twice more and rename the new tabs <code>Calculation_Engine</code> and <code>Dashboard</code>.</li></ol><div class="shot"><div class="tabs"><span class="plus">+</span><span class="on">Raw_Data</span><span>Calculation_Engine</span><span>Dashboard</span><span class="ghost">Projects</span><span class="ghost">TPM_Equipment</span><span class="ghost">TPM_Support</span></div><div class="cap">Bottom tab bar. The faded tabs are created by the script in step 8; do not create them yourself.</div></div><label class="done-row"><input type="checkbox" id="done3"> Step 3 done</label></div></section>
+<section class="step" id="s4" data-s="4"><div class="num">4</div><div class="body"><div class="part">Build the Sheet</div><h2>Fill Raw_Data and connect the trackers</h2><p class="why">Raw_Data pulls the tracker numbers in. Nothing in it is typed by hand except the two URLs.</p><ol class="do" start="1"><li>Open the <b>Raw_Data</b> tab, click <b>A1</b>, press <b>Copy</b> below and <b>Ctrl+V</b>.</li></ol><div class="copy"><div class="copy-h"><span><b>Raw_Data layout and formulas</b> · paste at <code>Raw_Data!A1</code></span><button type="button" class="cbtn" data-copy="c_raw">Copy</button></div><textarea id="c_raw" readonly rows="4" spellcheck="false">REQ_TRACKER_SHEET_URL	PASTE_REQUIREMENTS_TRACKER_URL_HERE
+BUGTRACKER_SHEET_URL	PASTE_BUG_TRACKER_URL_HERE
+
+=IMPORTRANGE($B$1,&quot;Coverage!A1:D3&quot;)					=IMPORTRANGE($B$2,&quot;Summary!A1:B3&quot;)
+
+
+
+
+=IMPORTRANGE($B$1,&quot;TestCases!A1:D5000&quot;)
+					=IMPORTRANGE($B$2,&quot;Summary!B4&quot;)</textarea></div><ol class="do" start="2"><li>Replace <code>B1</code> with the full URL of your Requirements tracker (or the sample from step 2) and <code>B2</code> with the Bug tracker URL. Copy each URL from the browser address bar.</li><li>Cells A4, A9, F4 and F10 now show <code>#REF!</code>. Hover over <b>A4</b> and click <b>Allow access</b> in the popup. Do the same for <b>F4</b>. One approval per tracker is enough.</li><li>Wait a few seconds for the data to load.</li></ol><div class="shot"><div class="pop"><b>#REF!</b><p>You need to connect these sheets.</p><span class="btn p">Allow access</span></div><div class="cap">The popup when you hover over an IMPORTRANGE cell for the first time.</div></div><div class="check"><b>You should see</b><ul><li>A4:D6 shows the Coverage table, with SYS.4 in row 5 and SYS.5 in row 6.</li><li>A9:D29 shows the test-case list (header in row 9).</li><li>F4:G6 shows Metric / Total Bugs / Escaped Bugs, and F10 the weekly comment.</li></ul></div><div class="scroll"><table class="g"><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th></tr><tr><td class="rn">1</td><td class="mono">REQ_TRACKER_SHEET_URL</td><td class="mono">PASTE_REQUIREMENTS_TRACKER_URL_HERE</td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td></tr><tr><td class="rn">2</td><td class="mono">BUGTRACKER_SHEET_URL</td><td class="mono">PASTE_BUG_TRACKER_URL_HERE</td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td></tr><tr><td class="rn">3</td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td><td class="mono"></td></tr><tr><td class="rn">4</td><td class="mono">Level</td><td class="mono">Total Reqs</td><td class="mono">Covered Reqs</td><td class="mono">Moved to R260</td><td class="mono"></td><td class="mono">Metric</td><td class="mono">Value</td></tr><tr><td class="rn">5</td><td class="mono">SYS.4</td><td class="mono">241</td><td class="mono">241</td><td class="mono">0</td><td class="mono"></td><td class="mono">Total Bugs</td><td class="mono">157</td></tr><tr><td class="rn">6</td><td class="mono">SYS.5</td><td class="mono">442</td><td class="mono">427</td><td class="mono">13</td><td class="mono"></td><td class="mono">Escaped Bugs</td><td class="mono">22</td></tr></table></div><p class="warn">Keep the cells below and to the right of each formula empty. If anything is typed there, the import shows <code>#REF!</code> "Array result was not expanded".</p><label class="done-row"><input type="checkbox" id="done4"> Step 4 done</label></div></section>
+<section class="step" id="s5" data-s="5"><div class="num">5</div><div class="body"><div class="part">Build the Sheet</div><h2>Paste the Calculation_Engine</h2><p class="why">This tab turns raw numbers into the KPIs the slide shows. Column A is the placeholder name: the key <code>BUG_RATE</code> fills <code>{{BUG_RATE}}</code> on the slide.</p><ol class="do" start="1"><li>Open the <b>Calculation_Engine</b> tab, click <b>A1</b>, press <b>Copy</b> and <b>Ctrl+V</b>. All 30 rows land in A1:C30.</li></ol><div class="copy"><div class="copy-h"><span><b>Calculation_Engine (30 rows)</b> · paste at <code>Calculation_Engine!A1</code></span><button type="button" class="cbtn" data-copy="c_eng">Copy</button></div><textarea id="c_eng" readonly rows="4" spellcheck="false">Key	Value	Notes
+SYS4_TOTAL	=IFERROR(VLOOKUP(&quot;SYS.4&quot;,Raw_Data!$A$5:$D$6,2,FALSE),0)	from Requirements tracker
+SYS4_COVERED	=IFERROR(VLOOKUP(&quot;SYS.4&quot;,Raw_Data!$A$5:$D$6,3,FALSE),0)	
+SYS4_COVERAGE	=IF(B2=0,0,B3/B2)	format 0.0%
+SYS4_UNCOVERED	=B2-B3	
+SYS4_MOVED	=IFERROR(VLOOKUP(&quot;SYS.4&quot;,Raw_Data!$A$5:$D$6,4,FALSE),0)	moved to next release
+SYS5_TOTAL	=IFERROR(VLOOKUP(&quot;SYS.5&quot;,Raw_Data!$A$5:$D$6,2,FALSE),0)	from Requirements tracker
+SYS5_COVERED	=IFERROR(VLOOKUP(&quot;SYS.5&quot;,Raw_Data!$A$5:$D$6,3,FALSE),0)	
+SYS5_COVERAGE	=IF(B7=0,0,B8/B7)	format 0.0%
+SYS5_UNCOVERED	=B7-B8	
+SYS5_MOVED	=IFERROR(VLOOKUP(&quot;SYS.5&quot;,Raw_Data!$A$5:$D$6,4,FALSE),0)	moved to next release
+COVERAGE_NOTE	=IF((B5+B10)=0,&quot;100% coverage achieved&quot;,&quot;Note: &quot;&amp;(B5+B10)&amp;&quot;/&quot;&amp;(B2+B7)&amp;&quot; reqs uncovered, &quot;&amp;(B6+B11)&amp;&quot;/&quot;&amp;(B5+B10)&amp;&quot; uncovered reqs shall be moved to R260&quot;)	
+BUG_TOTAL	=IFERROR(VALUE(Raw_Data!G5),0)	from Bug tracker
+BUG_ESCAPED	=IFERROR(VALUE(Raw_Data!G6),0)	
+BUG_RATE	=IF(B13=0,0,B14/B13)	format 0.00%
+BUG_COMMENT	=IFERROR(Raw_Data!F10,&quot;&quot;)	weekly comment, linked
+SYS4_TC_PLANNED	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.4&quot;)	
+SYS4_TC_EXECUTED	=B19+B20	passed + failed
+SYS4_TC_PASSED	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.4&quot;,Raw_Data!$C$10:$C,&quot;Passed&quot;)	
+SYS4_TC_FAILED	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.4&quot;,Raw_Data!$C$10:$C,&quot;Failed&quot;)	
+SYS5_TC_PLANNED	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.5&quot;)	
+SYS5_TC_EXECUTED	=B23+B24	passed + failed
+SYS5_TC_PASSED	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.5&quot;,Raw_Data!$C$10:$C,&quot;Passed&quot;)	
+SYS5_TC_FAILED	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.5&quot;,Raw_Data!$C$10:$C,&quot;Failed&quot;)	
+SYS4_AUTO_COUNT	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.4&quot;,Raw_Data!$D$10:$D,&quot;Automated&quot;)	
+SYS4_MANUAL_COUNT	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.4&quot;,Raw_Data!$D$10:$D,&quot;Manual&quot;)	
+SYS4_AUTO_RATE	=IF(B17=0,0,B25/B17)	format 0.0%
+SYS5_AUTO_COUNT	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.5&quot;,Raw_Data!$D$10:$D,&quot;Automated&quot;)	
+SYS5_MANUAL_COUNT	=COUNTIFS(Raw_Data!$B$10:$B,&quot;SYS.5&quot;,Raw_Data!$D$10:$D,&quot;Manual&quot;)	
+SYS5_AUTO_RATE	=IF(B21=0,0,B28/B21)	format 0.0%</textarea></div><ol class="do" start="2"><li>Format the percentages. Hold <b>Ctrl</b> and click <b>B4</b>, <b>B9</b>, <b>B27</b>, <b>B30</b>, then choose <b>Format → Number → Custom number format</b>, type <code>0.0%</code> and click <b>Apply</b>.</li><li>Click <b>B15</b> and apply the custom format <code>0.00%</code> the same way.</li></ol><div class="check"><b>You should see</b><ul><li>No cell in column B shows an error.</li><li>With the sample data from step 2, column B shows these values:</li></ul></div><div class="scroll"><table class="g exp"><tr><th>Key</th><th>Expected with sample data</th></tr><tr><td class="mono">SYS4_COVERAGE</td><td>100.0%</td></tr><tr><td class="mono">SYS4_TC_PLANNED</td><td>10</td></tr><tr><td class="mono">SYS4_TC_EXECUTED</td><td>9</td></tr><tr><td class="mono">SYS4_TC_PASSED</td><td>6</td></tr><tr><td class="mono">SYS4_TC_FAILED</td><td>3</td></tr><tr><td class="mono">SYS4_AUTO_RATE</td><td>40.0%</td></tr><tr><td class="mono">SYS5_COVERAGE</td><td>96.6%</td></tr><tr><td class="mono">SYS5_TC_PLANNED</td><td>10</td></tr><tr><td class="mono">SYS5_TC_EXECUTED</td><td>9</td></tr><tr><td class="mono">SYS5_TC_PASSED</td><td>5</td></tr><tr><td class="mono">SYS5_TC_FAILED</td><td>4</td></tr><tr><td class="mono">SYS5_AUTO_RATE</td><td>70.0%</td></tr><tr><td class="mono">BUG_RATE</td><td>14.01%</td></tr><tr><td class="mono">COVERAGE_NOTE</td><td>Note: 15/683 reqs uncovered, 13/15 uncovered reqs shall be moved to R260</td></tr></table></div><p class="hint">The script copies each value exactly as displayed, so the number format you set here is what appears on the slide.</p><label class="done-row"><input type="checkbox" id="done5"> Step 5 done</label></div></section>
+<section class="step" id="s6" data-s="6"><div class="num">6</div><div class="body"><div class="part">Build the Sheet</div><h2>Build the Dashboard tab and its charts</h2><p class="why">Dashboard is your in-Sheet overview. Its cells only reference Calculation_Engine, so the charts always match the slide.</p><ol class="do" start="1"><li>Open the <b>Dashboard</b> tab, click <b>A1</b>, press <b>Copy</b> and <b>Ctrl+V</b>.</li></ol><div class="copy"><div class="copy-h"><span><b>Dashboard chart data</b> · paste at <code>Dashboard!A1</code></span><button type="button" class="cbtn" data-copy="c_dash">Copy</button></div><textarea id="c_dash" readonly rows="4" spellcheck="false">SYS VAL chart data – every cell points at Calculation_Engine
+SYS.4 coverage
+Covered	=Calculation_Engine!B4
+Remaining	=MAX(0,1-B3)
+
+SYS.5 coverage
+Covered	=Calculation_Engine!B9
+Remaining	=MAX(0,1-B7)
+
+SYS.4 automation
+Automated	=Calculation_Engine!B27
+Remaining	=MAX(0,1-B11)
+
+SYS.5 automation
+Automated	=Calculation_Engine!B30
+Remaining	=MAX(0,1-B15)
+
+Bug escape rate
+Escaped	=Calculation_Engine!B15
+Remaining	=MAX(0,1-B19)
+
+
+Level	Passed	Failed	Not executed
+SYS.4	=Calculation_Engine!B19	=Calculation_Engine!B20	=Calculation_Engine!B17-Calculation_Engine!B18
+SYS.5	=Calculation_Engine!B23	=Calculation_Engine!B24	=Calculation_Engine!B21-Calculation_Engine!B22</textarea></div><ol class="do" start="2"><li>Select <b>B3:B4</b> and B7:B8, B11:B12, B15:B16, B19:B20 (hold Ctrl) and apply the custom format <code>0.0%</code>.</li></ol><h3>6a · Doughnut chart (repeat for each of the 5 blocks)</h3><ol class="do" start="1"><li>Select <b>A3:B4</b> (SYS.4 coverage).</li><li>Choose <b>Insert → Chart</b>. The Chart editor opens on the right.</li><li><b>Setup</b> tab → <b>Chart type</b> → choose <b>Doughnut chart</b>.</li><li><b>Customize</b> tab → <b>Pie chart</b>: set <b>Donut hole</b> to <b>75%</b> and <b>Slice label</b> to <b>None</b>.</li><li><b>Customize</b> → <b>Pie slice</b>: pick "Covered" and choose blue; pick "Remaining" and choose light grey 2.</li><li><b>Customize</b> → <b>Legend</b> → <b>Position: None</b>. <b>Chart &amp; axis titles</b> → type the block title, e.g. <code>SYS.4 coverage</code>.</li><li>Repeat with A7:B8, A11:B12, A15:B16 and A19:B20.</li></ol><div class="shot"><div class="editor"><div class="et"><span class="on">Setup</span><span>Customize</span></div><div class="er"><span>Chart type</span><b>Doughnut chart ▾</b></div><div class="er"><span>Data range</span><b class="mono">A3:B4</b></div><div class="er"><span>Pie chart › Donut hole</span><b>75%</b></div><div class="er"><span>Legend › Position</span><b>None</b></div></div><div class="cap">Chart editor settings for one doughnut.</div></div><h3>6b · Stacked bar chart (test execution)</h3><ol class="do" start="1"><li>Select <b>A23:D25</b> and choose <b>Insert → Chart</b>.</li><li><b>Setup</b> → <b>Chart type</b> → <b>Stacked bar chart</b>. Tick <b>Use row 23 as headers</b> and <b>Use column A as labels</b>.</li><li><b>Customize</b> → <b>Series</b>: Passed light green, Failed red, Not executed light grey.</li></ol><div class="check"><b>You should see</b><ul><li>Five doughnuts and one stacked bar. With the sample: SYS.4 coverage ring full (100%), bug ring at about one seventh (14%).</li><li>Stacked bars: SYS.4 = 6 passed, 3 failed, 1 not executed; SYS.5 = 5 / 4 / 1.</li></ul></div><label class="done-row"><input type="checkbox" id="done6"> Step 6 done</label></div></section>
+<section class="step" id="s7" data-s="7"><div class="num">7</div><div class="body"><div class="part">Script and form</div><h2>Paste the script and the form into Apps Script</h2><p class="why">The script reads the Sheet and builds the deck. The HTML file is the input form TPMs use.</p><ol class="do" start="1"><li>In the dashboard Sheet choose <b>Extensions → Apps Script</b>. A new tab opens with a file <code>Code.gs</code> containing <code>function myFunction() {}</code>.</li><li>Rename the project: click <b>Untitled project</b> (top left) and type <code>SYS VAL Dashboard</code>.</li><li>Click into <code>Code.gs</code>, press <b>Ctrl+A</b>, then paste the full content of <b>Code.gs</b> from step 1.</li><li>Click <b>+</b> next to <b>Files</b> → <b>HTML</b>. Type <code>InputForm</code> (without .html) and press Enter. Select all its content and paste <b>InputForm.html</b>.</li><li>Back in <code>Code.gs</code>, replace the folder placeholder with your folder ID from step 1. Leave <code>TEMPLATE_ID</code> for step 11.</li><li>Press <b>Ctrl+S</b>.</li></ol><div class="shot"><div class="ide"><div class="files"><div class="fh">Files <span>+</span></div><div class="on">Code.gs</div><div>InputForm.html</div></div><pre class="code"><span class="c">// Code.gs, lines 11-13</span>
+const CONFIG = {
+  TEMPLATE_ID: <span class="hl">'PASTE_TEMPLATE_SLIDES_ID'</span>,   <span class="c">← step 11</span>
+  FOLDER_ID:   <span class="hl">'0B9q…Lk7'</span>,                  <span class="c">← your folder ID</span>
+  ...</pre></div><div class="cap">The editor after step 7. Keep the quotes around each ID.</div></div><div class="check"><b>You should see</b><ul><li>Two files in the sidebar: Code.gs and InputForm.html.</li><li>No red error bar after saving.</li></ul></div><label class="done-row"><input type="checkbox" id="done7"> Step 7 done</label></div></section>
+<section class="step" id="s8" data-s="8"><div class="num">8</div><div class="body"><div class="part">Script and form</div><h2>Run the setup and grant permissions</h2><p class="why">The first run asks for your permission to read and write your Sheet, Slides and Drive. It also creates the three input tabs.</p><ol class="do" start="1"><li>Go back to the Sheet tab and reload the page (<b>F5</b>). After a few seconds a menu <b>Dashboard Generator</b> appears next to Help.</li><li>Choose <b>Dashboard Generator → Setup Input Tabs (one-off)</b>.</li><li>A dialog "Authorisation required" opens. Click <b>OK</b> or <b>Continue</b>, then pick your account.</li><li>If you see "Google hasn't verified this app", click <b>Advanced</b>, then <b>Go to SYS VAL Dashboard (unsafe)</b>. This is your own script, so this is expected.</li><li>Review the access list (Google Sheets, Slides, Drive, external requests for the form, and triggers) and click <b>Allow</b>.</li><li>Run <b>Setup Input Tabs</b> once more if it stopped at the permission screen.</li></ol><div class="shot"><div class="menu"><div class="t">Dashboard Generator</div><div>Open TPM Input Form</div><div>Generate Dashboard for a Project…</div><div>Generate All Projects</div><div class="sep"></div><div class="go">Setup Input Tabs (one-off)</div><div>Schedule Weekly (Mon 07:00, all projects)</div></div><div class="dlg n"><div class="dt">Google hasn't verified this app</div><div class="dr"><span>1.</span><b>Advanced</b></div><div class="dr"><span>2.</span><b class="hl">Go to SYS VAL Dashboard (unsafe)</b></div><div class="dr"><span>3.</span><b>Allow</b></div></div><div class="cap">The menu, and the three clicks on the warning screen.</div></div><div class="check"><b>You should see</b><ul><li>Three new tabs: Projects, TPM_Equipment, TPM_Support, with dark blue header rows.</li><li>Projects already contains one row: Project A, R250, Calculation_Engine.</li><li>A toast at the bottom right: "Input tabs ready".</li></ul></div><label class="done-row"><input type="checkbox" id="done8"> Step 8 done</label></div></section>
+<section class="step" id="s9" data-s="9"><div class="num">9</div><div class="body"><div class="part">Script and form</div><h2>List your projects</h2><p class="why">The Projects tab fills the dropdown in the form and the {{PROJECT}} and {{RELEASE}} placeholders on the slide.</p><ol class="do" start="1"><li>Open the <b>Projects</b> tab. Overwrite <b>Project A</b> with your real project name and <b>R250</b> with its release.</li><li>Add one row per further project. Names must be unique; TPMs pick from exactly these names.</li><li>Leave column C empty unless the project has its own trackers (see the note).</li></ol><div class="copy"><div class="copy-h"><span><b>Projects tab (example)</b> · paste at <code>Projects!A1</code></span><button type="button" class="cbtn" data-copy="c_proj">Copy</button></div><textarea id="c_proj" readonly rows="4" spellcheck="false">Project	Release	Engine Tab (optional)
+Project A	R250	Calculation_Engine
+Project B	R260	</textarea></div><p class="warn"><b>Different trackers per project:</b> right-click the <b>Raw_Data</b> tab → <b>Duplicate</b>, rename the copy <code>Raw_Data_B</code> and change its two URLs. Duplicate <b>Calculation_Engine</b> as <code>Calculation_Engine_B</code>, then use <b>Edit → Find and replace</b> on that tab only: find <code>Raw_Data!</code>, replace with <code>Raw_Data_B!</code>. Put <code>Calculation_Engine_B</code> in column C for that project.</p><label class="done-row"><input type="checkbox" id="done9"> Step 9 done</label></div></section>
+<section class="step" id="s10" data-s="10"><div class="num">10</div><div class="body"><div class="part">Script and form</div><h2>Publish the form as a web app</h2><p class="why">Publishing gives you one link for all TPMs. The form runs as you, so TPMs need no access to the Sheet and cannot edit it directly.</p><ol class="do" start="1"><li>In the Apps Script tab click <b>Deploy</b> (blue button, top right) → <b>New deployment</b>.</li><li>Click the gear icon next to <b>Select type</b> → <b>Web app</b>.</li><li>Description: <code>TPM Input v1</code>. <b>Execute as</b>: <b>Me</b>. <b>Who has access</b>: <b>Anyone within &lt;your organisation&gt;</b>.</li><li>Click <b>Deploy</b>. Approve permissions again if asked.</li><li>Copy the <b>Web app URL</b> (ends in <code>/exec</code>) and click <b>Done</b>.</li><li>Open the URL in a new tab to test it, then send it to your TPMs.</li></ol><div class="shot"><div class="dlg"><div class="dt">New deployment · Web app</div><div class="dr"><span>Description</span><b>TPM Input v1</b></div><div class="dr"><span>Execute as</span><b class="hl">Me (you@company.com)</b></div><div class="dr"><span>Who has access</span><b class="hl">Anyone within your organisation</b></div><div class="dr"><span>Web app URL</span><b class="mono">https://script.google.com/a/macros/…/exec</b></div></div><div class="cap">The deployment dialog with the two settings that matter.</div></div><div class="check"><b>You should see</b><ul><li>The URL opens the form, the dropdown lists your projects, and the bottom bar shows Save and Generate deck.</li></ul></div><p class="warn">After any change to the code: <b>Deploy → Manage deployments</b> → pencil icon → <b>Version: New version</b> → <b>Deploy</b>. The URL stays the same. Without this, TPMs keep getting the old form.</p><label class="done-row"><input type="checkbox" id="done10"> Step 10 done</label></div></section>
+<section class="step" id="s11" data-s="11"><div class="num">11</div><div class="body"><div class="part">Slides</div><h2>Turn the template into Google Slides</h2><p class="why">The script copies this deck every week and fills its placeholders.</p><ol class="do" start="1"><li>In Google Drive click <b>+ New → File upload</b> and choose <code>SYS_VAL_Dashboard_Template.pptx</code>.</li><li>Right-click the uploaded file → <b>Open with → Google Slides</b>.</li><li>In Slides choose <b>File → Save as Google Slides</b>. A second, native copy opens. You can delete the .pptx afterwards.</li><li>Rename the new deck <code>SYS VAL Dashboard TEMPLATE</code>.</li><li>Copy its ID from the address bar: <code>docs.google.com/presentation/d/<span class="hl">1AbC…xYz</span>/edit</code>.</li><li>Paste it into <code>TEMPLATE_ID</code> in Code.gs, save, and deploy a new version (step 10 note).</li></ol><div class="shot"><div class="slide"><div class="head"><span><span class="ph">{{PROJECT}}</span> · REL <span class="ph">{{RELEASE}}</span></span><span class="badge">Updated cw<span class="ph">{{CW}}</span></span></div><div class="card"><h4>TEST EQUIPMENT STATUS</h4><span><span class="ph">{{EQ_PLATFORM_1}}</span> <span class="ph">{{EQ_STATUS_1}}</span></span><span>… rows 2 to 8</span></div><div class="card"><h4>COVERAGE · BUG ESCAPE</h4><span class="ph">{{SYS5_COVERAGE}}</span><span class="ph">{{BUG_RATE}}</span></div><div class="card" style="grid-column:1/-1"><h4>SUPPORT REQUIRED</h4><span><span class="ph">{{ACTION_1}}</span> <span class="ph">{{RESP_1}}</span> <span class="ph">{{DUE_1}}</span> <span class="ph">{{STATUS_1}}</span></span></div></div><div class="cap">Simplified view of the template. Every yellow chip is a placeholder already in the file.</div></div><div class="check"><b>You should see</b><ul><li>The deck shows text such as {{PROJECT}} and {{SYS5_COVERAGE}}. Do not edit or retype these; one wrong character and that value is not filled.</li><li>To move or restyle a box, drag it; the placeholder text stays intact.</li></ul></div><label class="done-row"><input type="checkbox" id="done11"> Step 11 done</label></div></section>
+<section class="step" id="s12" data-s="12"><div class="num">12</div><div class="body"><div class="part">Run it</div><h2>Enter test data in the form</h2><p class="why">This checks that the form can write to the Sheet.</p><ol class="do" start="1"><li>Open the web app URL and pick your project.</li><li>Test Equipment: type <code>Veh 1</code>, planned <code>Week 43</code>, achieved <code>Week 50</code>, status <b>Ready</b>. Add a second row <code>RadarView</code>, planned Week 45, status <b>Blocked</b>.</li><li>Support Required row 1: Action <code>XCP Implementation for SYS.4 pending</code>, Responsible your name, Due <code>R3.1_last (28.4.26)</code>, Status <code>BLOCKER: specific binary needed</code>.</li><li>Click <b>Save</b>.</li></ol><div class="shot"><div class="scroll"><table class="g"><tr><th>Test Platform</th><th>Planned Week</th><th>Achieved Week</th><th>Status</th></tr><tr><td>Veh 1</td><td>Week 43, 2026</td><td class="late">Week 50, 2026</td><td class="s-ready">Ready</td></tr><tr><td>RadarView</td><td>Week 45, 2026</td><td></td><td class="s-block">Blocked</td></tr></table></div><div class="scroll"><table class="g"><tr><th>N°</th><th>Action Item</th><th>Responsible</th><th>Due Date</th><th>Status</th></tr><tr><td>1</td><td>XCP Implementation for SYS.4 pending</td><td>J. Doe</td><td>R3.1_last (28.4.26)</td><td class="red">BLOCKER: specific binary needed</td></tr></table></div><div class="cap">The form while you type: the late week and the BLOCKER status turn red straight away.</div></div><div class="check"><b>You should see</b><ul><li>Green message "Saved for &lt;project&gt;." and "Last saved … by you@…" under the title.</li><li>In the Sheet, TPM_Equipment has 2 rows and TPM_Support 1 row for your project, with your email and time.</li></ul></div><label class="done-row"><input type="checkbox" id="done12"> Step 12 done</label></div></section>
+<section class="step" id="s13" data-s="13"><div class="num">13</div><div class="body"><div class="part">Run it</div><h2>Generate the first deck</h2><p class="why">This is the full pipeline: tracker numbers, form input and template come together in a new deck.</p><ol class="do" start="1"><li>In the form click <b>Generate deck</b>. It takes about 20 seconds.</li><li>Click <b>Open deck</b> in the green message. The deck is also in your <code>SYS VAL Decks</code> folder.</li><li>From the Sheet you can also use <b>Dashboard Generator → Generate Dashboard for a Project…</b> (type the exact project name) or <b>Generate All Projects</b>.</li></ol><div class="check"><b>You should see</b><ul><li>The file is named <code>SYS VAL DASHBOARD &lt;project&gt; CW&lt;week&gt;</code>.</li><li>Top: your project name, its release, and "Updated cw" plus the current week.</li><li>Coverage 100.0% and 96.6%, bug escape rate 14.01%, and the red note "Note: 15/683 reqs uncovered, 13/15 uncovered reqs shall be moved to R260" (sample data).</li><li>Test Equipment shows 2 rows (the other 6 are removed); Ready is green, Blocked light red, and cw50 is red because it is later than cw43.</li><li>Support Required row 1 is filled and its status is red; rows 2 and 3 are empty.</li><li>No text in double braces remains. If some does, see Troubleshooting.</li></ul></div><label class="done-row"><input type="checkbox" id="done13"> Step 13 done</label></div></section>
+<section class="step" id="s14" data-s="14"><div class="num">14</div><div class="body"><div class="part">Run it</div><h2>Schedule the weekly run and go live</h2><p class="why">From now on one deck per project is created every Monday morning.</p><ol class="do" start="1"><li>In the Sheet choose <b>Dashboard Generator → Schedule Weekly (Mon 07:00, all projects)</b>.</li><li>Check it in Apps Script: click the clock icon <b>Triggers</b> in the left bar. You should see one trigger: <code>generateAllDashboards</code>, Time-based, Week timer, Every Monday, 7am to 8am.</li><li>Switch Raw_Data B1/B2 from the sample sheets to the real Requirements tracker and Bug tracker (allow access again).</li><li>Delete the test rows: open the form, clear them, Save.</li><li>Tell TPMs to save by Friday each week. The form shows when each project was last saved.</li></ol><div class="shot"><div class="scroll"><table class="g"><tr><th>Function</th><th>Event</th><th>Schedule</th></tr><tr><td class="mono">generateAllDashboards</td><td>Time-based</td><td>Every Monday, 7am to 8am</td></tr></table></div><div class="cap">Apps Script → Triggers after scheduling. Running the menu item again replaces it rather than adding a second one.</div></div><label class="done-row"><input type="checkbox" id="done14"> Step 14 done</label></div></section>
+
+  <section class="ft">
+    <h2>If something goes wrong</h2>
+    <div class="scroll"><table><tr><th>You see</th><th>Fix</th></tr><tr><td><code>Set TEMPLATE_ID and FOLDER_ID in CONFIG first</code></td><td>An ID is still a placeholder, or the quotes were removed. Fix it, save, and deploy a new version.</td></tr><tr><td><code>Tab "Projects" not found</code></td><td>Run Setup Input Tabs (step 8). Check the tab names have no trailing space.</td></tr><tr><td><code>Unknown project "…"</code></td><td>The name typed or sent does not exactly match the Projects tab.</td></tr><tr><td>Form says "No projects yet"</td><td>Add at least one row to the Projects tab.</td></tr><tr><td>Form behaves like an older version</td><td>Deploy a new version (step 10 note).</td></tr><tr><td>"Last saved … by unknown"</td><td>The TPM is outside your Google Workspace organisation, so Google hides their email.</td></tr><tr><td><code>#REF!</code> "You need to connect these sheets"</td><td>Hover the cell and click Allow access (step 4).</td></tr><tr><td><code>#REF!</code> "Array result was not expanded"</td><td>Something is typed in the cells an import needs. Clear the area below or right of the formula.</td></tr><tr><td>Values on the slide show as 0.997 instead of 99.7%</td><td>Set the percent format on that Calculation_Engine cell (step 5).</td></tr><tr><td>Text in double braces left in the deck</td><td>The key does not exist or is spelled differently. The toast and View → Executions in Apps Script list the unmatched placeholders.</td></tr><tr><td>"Exception: You do not have permission"</td><td>Run any menu item once yourself and accept the permissions (step 8). For the trigger, you must be the one who created it.</td></tr><tr><td>Deck generation stops after 6 minutes</td><td>Apps Script time limit. Generate projects one by one, or fewer projects per run.</td></tr></table></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var KEY="sysval-setup-ticks-v3", steps=[].slice.call(document.querySelectorAll(".step")), saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){}
+  var links=[].slice.call(document.querySelectorAll(".jump a"));
+  function update(){
+    var n=0,o={};
+    steps.forEach(function(s,i){var c=s.querySelector(".done-row input").checked;s.classList.toggle("done",c);if(links[i])links[i].classList.toggle("ok",c);if(c){n++;o[s.dataset.s]=1}});
+    document.getElementById("count").textContent=n+" / "+steps.length;
+    document.getElementById("fill").style.width=(n/steps.length*100)+"%";
+    try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}
+  }
+  steps.forEach(function(s){var i=s.querySelector(".done-row input");i.checked=!!saved[s.dataset.s];i.addEventListener("change",update)});
+  update();
+  document.querySelectorAll(".cbtn").forEach(function(b){
+    b.addEventListener("click",function(){
+      var t=document.getElementById(b.dataset.copy);
+      function ok(){b.textContent="Copied";b.classList.add("ok");setTimeout(function(){b.textContent="Copy";b.classList.remove("ok")},1800)}
+      function manual(){t.focus();t.select();b.textContent="Press Ctrl+C"}
+      try{navigator.clipboard.writeText(t.value).then(ok,manual)}catch(e){manual()}
+    });
+  });
+})();
+</script>
