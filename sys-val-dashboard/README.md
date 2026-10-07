@@ -1,7 +1,7 @@
 # SYS VAL Project Dashboard – Sheets pipeline + Slides generator
 
 ```
-DOORS sheet ─┐                                   ┌─> Dashboard (charts, strictly from Calculation_Engine)
+Req. tracker─┐                                   ┌─> Dashboard (charts, strictly from Calculation_Engine)
 Bug tracker ─┴─> Raw_Data ─> Calculation_Engine ─┤
 InputForm.html ─> TPM_Equipment + TPM_Support ──┘─> Code.gs ─> Slides copy "SYS VAL DASHBOARD <Project> CWxx"
 ```
@@ -14,11 +14,11 @@ add a row + put the placeholder in the template. No script change.
 
 | Source | Tab | Layout |
 |---|---|---|
-| DOORS metrics sheet | `Coverage` | `A1:D3` – header `Level, Total Reqs, Covered Reqs, Moved to R260`; row 2 = `SYS.4`, row 3 = `SYS.5` |
-| DOORS metrics sheet | `TestCases` | `A:D` – `TC_ID, Level (SYS.4/SYS.5), Result (Passed/Failed/Not Run), Type (Automated/Manual)` |
+| Requirements tracker sheet | `Coverage` | `A1:D3` – header `Level, Total Reqs, Covered Reqs, Moved to R260`; row 2 = `SYS.4`, row 3 = `SYS.5` |
+| Requirements tracker sheet | `TestCases` | `A:D` – `TC_ID, Level (SYS.4/SYS.5), Result (Passed/Failed/Not Run), Type (Automated/Manual)` |
 | Bug tracker sheet | `Summary` | `A1:B4` – `Metric, Value` / `Total Bugs, n` / `Escaped Bugs, n` / `Weekly Comments, text` |
 
-Test-case results were not named as one of your two sources, so I assumed they live in the DOORS/ALM sheet. Point that import at wherever they really are.
+Test-case results were not named as one of your two sources, so I assumed they live in the Requirements tracker sheet. Point that import at wherever they really are.
 
 ---
 
@@ -43,7 +43,7 @@ The form runs as the Sheet owner, so TPMs need **no edit access** to the Sheet. 
 - `BLOCKER:` → red text on `TPM_Support!F2:F`.
 - All three tabs are locked to the owner.
 
-**Several projects with different data sources:** duplicate `Raw_Data` and `Calculation_Engine` per project (for example `Raw_Data_B`, `Calculation_Engine_B` pointing at project B's DOORS and bug tracker), then put the engine tab name in `Projects!C`.
+**Several projects with different data sources:** duplicate `Raw_Data` and `Calculation_Engine` per project (for example `Raw_Data_B`, `Calculation_Engine_B` pointing at project B's Requirements tracker and Bug tracker), then put the engine tab name in `Projects!C`.
 
 ### Publish the form
 
@@ -56,7 +56,7 @@ The form runs as the Sheet owner, so TPMs need **no edit access** to the Sheet. 
 
 | Cell | Content |
 |---|---|
-| `A1` / `B1` | `DOORS_SHEET_URL` / *paste URL* |
+| `A1` / `B1` | `REQ_TRACKER_SHEET_URL` / *paste URL* |
 | `A2` / `B2` | `BUGTRACKER_SHEET_URL` / *paste URL* |
 | `A4` | `=IMPORTRANGE($B$1,"Coverage!A1:D3")` → spills `A4:D6` (SYS.4 in row 5, SYS.5 in row 6) |
 | `A9` | `=IMPORTRANGE($B$1,"TestCases!A1:D5000")` → header row 9, data from row 10 |
