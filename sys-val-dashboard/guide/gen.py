@@ -99,10 +99,20 @@ steps.append(step(6, 'Build the Sheet', 'Build the Dashboard tab and its charts'
        '<b>Customize</b> → <b>Legend</b> → <b>Position: None</b>. <b>Chart &amp; axis titles</b> → type the block title, e.g. <code>SYS.4 coverage</code>.',
        'Repeat with A7:B8, A11:B12, A15:B16 and A19:B20.'])
  + shot('<div class="editor"><div class="et"><span class="on">Setup</span><span>Customize</span></div><div class="er"><span>Chart type</span><b>Doughnut chart ▾</b></div><div class="er"><span>Data range</span><b class="mono">A3:B4</b></div><div class="er"><span>Pie chart › Donut hole</span><b>75%</b></div><div class="er"><span>Legend › Position</span><b>None</b></div></div>','Chart editor settings for one doughnut.')
- + '<h3>6b · Stacked bar chart (test execution)</h3>'
+ + '<h3>6b · Show the percentage in the middle of each ring</h3>'
+ + '<p class="hint">Google Sheets cannot write text inside a doughnut hole. The usual workaround is a transparent Scorecard chart placed on top of the ring.</p>'
+ + ol(['Click an empty cell, then choose <b>Insert → Chart</b>.',
+       '<b>Setup</b> → <b>Chart type</b> → <b>Scorecard chart</b> (under "Other"). Set <b>Key value</b> to <code>B3</code> (B7, B11, B15, B19 for the other rings).',
+       '<b>Customize</b> → <b>Chart style</b>: <b>Background colour</b> → <b>None</b>, <b>Border colour</b> → <b>None</b>.',
+       '<b>Customize</b> → <b>Key value</b>: <b>Number format</b> → <b>Percent</b> (or Custom <code>0.0%</code>), font size about 24, bold, dark grey.',
+       '<b>Customize</b> → <b>Chart &amp; axis titles</b>: leave the title empty.',
+       'Close the editor. Drag the scorecard into the hole of the ring and drag its corner until it fits. A chart created later sits on top, so the number stays visible.'])
+ + shot('<div class="donut-row"><div class="donut"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--navy)" stroke-width="12"/></svg><b>100.0%</b></div><div class="editor" style="margin:0;flex:1 1 260px"><div class="et"><span class="on">Setup</span><span>Customize</span></div><div class="er"><span>Chart type</span><b>Scorecard chart</b></div><div class="er"><span>Key value</span><b class="mono">B3</b></div><div class="er"><span>Background colour</span><b>None</b></div><div class="er"><span>Number format</span><b>Percent</b></div></div></div>','The scorecard (right) dragged into the ring gives the result on the left.')
+ + '<p class="hint">Quicker but less tidy: in the doughnut\'s <b>Customize → Pie chart</b>, set <b>Slice label</b> to <b>Percentage</b>. The value then appears on the ring itself instead of in the middle.</p>'
+ + '<h3>6c · Stacked bar chart (test execution)</h3>'
  + ol(['Select <b>A23:D25</b> and choose <b>Insert → Chart</b>.','<b>Setup</b> → <b>Chart type</b> → <b>Stacked bar chart</b>. Tick <b>Use row 23 as headers</b> and <b>Use column A as labels</b>.',
        '<b>Customize</b> → <b>Series</b>: Passed light green, Failed red, Not executed light grey.'])
- + check(['Five doughnuts and one stacked bar. With the sample: SYS.4 coverage ring full (100%), bug ring at about one seventh (14%).','Stacked bars: SYS.4 = 6 passed, 3 failed, 1 not executed; SYS.5 = 5 / 4 / 1.'])))
+ + check(['Five doughnuts, each with its percentage in the middle, and one stacked bar. With the sample: SYS.4 coverage ring full (100%), bug ring at about one seventh (14%).','Stacked bars: SYS.4 = 6 passed, 3 failed, 1 not executed; SYS.5 = 5 / 4 / 1.'])))
 
 steps.append(step(7, 'Script and form', 'Paste the script and the form into Apps Script',
  'The script reads the Sheet and builds the deck. The HTML file is the input form TPMs use.',
@@ -261,5 +271,5 @@ page = f'''<title>SYS VAL Dashboard Setup</title>
 }})();
 </script>
 '''
-open('../setup-guide.html','w').write(page)
+open('setup-guide.html','w').write(page)
 print('steps', len(steps), 'bytes', len(page))
