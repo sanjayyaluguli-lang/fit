@@ -201,7 +201,8 @@ steps.append(step(14, 'Run it', 'Schedule the weekly run and go live',
 
 trouble = [
  ('<code>Set TEMPLATE_ID and FOLDER_ID in CONFIG first</code>','An ID is still a placeholder, or the quotes were removed. Fix it, save, and deploy a new version.'),
- ('<code>Tab "Projects" not found</code>','Run Setup Input Tabs (step 8). Check the tab names have no trailing space.'),
+ ('<code>Tab "TPM_Equipment" not found</code> (or Projects / TPM_Support)','Run Setup Input Tabs (step 8), accept the permissions, and run it once more. Since the latest Code.gs the script creates missing input tabs by itself, so update Code.gs and deploy a new version (step 10 note).'),
+ ('<code>Tab "Calculation_Engine…" not found</code>','The Engine Tab name in the Projects tab does not match a tab. Fix the name or leave the cell empty.'),
  ('<code>Unknown project "…"</code>','The name typed or sent does not exactly match the Projects tab.'),
  ('Form says "No projects yet"','Add at least one row to the Projects tab.'),
  ('Form behaves like an older version','Deploy a new version (step 10 note).'),

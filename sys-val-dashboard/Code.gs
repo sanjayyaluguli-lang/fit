@@ -171,9 +171,23 @@ function replaceProjectRows_(sh, cols, projectName, newRows) {
   if (all.length) sh.getRange(2, 1, all.length, cols).setValues(all);
 }
 
+/** Finds a tab by name, ignoring case and stray spaces ("TPM_Equipment " still matches). */
+function findSheet_(name) {
+  const ss = SpreadsheetApp.getActive();
+  const want = name.trim().toLowerCase();
+  return ss.getSheetByName(name) || ss.getSheets().find(s => s.getName().trim().toLowerCase() === want) || null;
+}
+
 function sheet_(name) {
-  const sh = SpreadsheetApp.getActive().getSheetByName(name);
-  if (!sh) throw new Error('Tab "' + name + '" not found. Run Dashboard Generator → Setup Input Tabs first.');
+  let sh = findSheet_(name);
+  const inputTabs = [CONFIG.PROJECTS_SHEET, CONFIG.EQUIPMENT_SHEET, CONFIG.SUPPORT_SHEET];
+  if (!sh && inputTabs.indexOf(name) !== -1) {
+    setupInputSheets(); // first use, or a tab was deleted: recreate the input tabs
+    sh = findSheet_(name);
+  }
+  if (!sh) {
+    throw new Error('Tab "' + name + '" not found. Create it, or fix the Engine Tab name in the Projects tab.');
+  }
   return sh;
 }
 
@@ -400,7 +414,10 @@ function installWeeklyTrigger() {
 function setupInputSheets() {
   const ss = SpreadsheetApp.getActive();
   const ensure = (name, headers) => {
-    const sh = ss.getSheetByName(name) || ss.insertSheet(name);
+    let sh = findSheet_(name);
+    if (!sh) {
+      try { sh = ss.insertSheet(name); } catch (e) { sh = findSheet_(name); } // created meanwhile by another user
+    }
     sh.getRange(1, 1, 1, headers.length).setValues([headers])
       .setFontWeight('bold').setBackground('#1F4E79').setFontColor('#FFFFFF');
     sh.setFrozenRows(1);
